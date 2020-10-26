@@ -36,7 +36,7 @@ public class KardControl : MonoBehaviour
 
     [SerializeField] private GameObject T;
 
-    private void Awake()
+    private void Awake()// заполняем массив колоды картами на сцене
     {
 
         for (int i = 0; i <= deck.Length - 1; ++i)
@@ -54,11 +54,11 @@ public class KardControl : MonoBehaviour
     }
 
 
-    public float _sh = 0;
+    public float _sh = 0;// простой счетчик - костыль
     private void FixedUpdate()
     {
 
-        if (_sh < 2.5f && GoToHand == true)
+        if (_sh < 2.5f && GoToHand == true)//что бы функция контролирующая позиции карт не использовалась бесконечно
         {
             KardInHandControl();
             _sh += 1 * Time.deltaTime;
@@ -170,7 +170,7 @@ public class KardControl : MonoBehaviour
     }
 
     public bool GoToHand = false;
-    private void OnMouseDown()
+    private void OnMouseDown() //если нажали на колоду
     {
         cardCounter = 0;
         for (int i = 0; i <= deck.Length - 1; ++i)
@@ -193,9 +193,9 @@ public class KardControl : MonoBehaviour
             if (KIHC[i] == null)
             {
                 KIHC[i] = GameObject.Find("Kard (" + cardCounter.ToString() + ")");
-                KIHC[i].GetComponent<Control>().inHand = true;
-                KIHC[i].GetComponent<Rigidbody>().isKinematic = true;
-                KIHC[i].GetComponent<Collider>().isTrigger = true;
+                KIHC[i].GetComponent<Control>().inHand = true;//показываем что карта теперь в руке
+                KIHC[i].GetComponent<Rigidbody>().isKinematic = true;//отключаем физику, что бы карта не падала из руки
+                KIHC[i].GetComponent<Collider>().isTrigger = true;//пока карта в руке, она не должна взаимодействовать с другими картами (а то будут разлетаться во все стороны)
                 break;
             }
         }
@@ -203,7 +203,7 @@ public class KardControl : MonoBehaviour
         _sh = 0;
     }
 
-    private void RandomKard()
+    private void RandomKard()//мешаем карты в колоде
     {
         for (int i = 0; i <= deck.Length - 1; ++i)
         {
@@ -216,7 +216,7 @@ public class KardControl : MonoBehaviour
             }
         }
     }
-    private void Sort()
+    private void Sort()//сортируем карты в колоде так как они были изначально в самом массиве
     {
         float _vectT = 0.15f;
         for (int i = 0; i <= deck.Length - 1; ++i)
@@ -230,7 +230,7 @@ public class KardControl : MonoBehaviour
         }
     }
 
-    private void ResetCardP()
+    private void ResetCardP()// дополнительно для теста, возвращает все карты из руки в колоду
     {
         for (int i = 0; i <= KIHC.Length - 1; ++i)//перебираем карты в руке и задаем новые позиции
         {
@@ -255,7 +255,7 @@ public class KardControl : MonoBehaviour
     }
 
 
-    private void OnGUI()
+    private void OnGUI()//кнопки
     {
         if (GUI.Button(new Rect(40, Screen.height / 3 - 20, 100, 30), "Сортировка"))
         {
@@ -267,7 +267,7 @@ public class KardControl : MonoBehaviour
             RandomKard();
         }
 
-        if (GUI.Button(new Rect(40, Screen.height / 3 + 40, 100, 40), "Вернуть в колоду"))
+        if (GUI.Button(new Rect(40, Screen.height / 3 + 40, 150, 30), "Вернуть в колоду"))
         {
             if (KIHC[0] != null)
             {
