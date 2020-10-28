@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 public class KardControl : MonoBehaviour
 {
     public GameObject[] deck = new GameObject[15];
-    public int _kardCol = 10;
+    public int _kardCol = 10;//в Awake определяем сколько всего карт выложено в колоду
 
     public bool cardGoToHand = false;//карта движется в руку?
     public int cardCounter = 0;//счетчик какая карта пойдет в руку?
@@ -41,13 +41,13 @@ public class KardControl : MonoBehaviour
 
         for (int i = 0; i <= deck.Length - 1; ++i)
         {
-            deck[i] = GameObject.Find("Kard (" + (i + 1).ToString() + ")");//массив заполняется перед функцией update каждый кадр, определяет сколько машин/Player(номер) зарегистрированно на сцене и записывает их в массив
+                deck[i] = GameObject.Find("Kard (" + (i + 1).ToString() + ")");//массив заполняется перед функцией update каждый кадр, определяет сколько машин/Player(номер) зарегистрированно на сцене и записывает их в массив
 
-            if (deck[i] == null)
-            {
-                _kardCol = i;
-                break;
-            }
+                if (deck[i] == null)
+                {
+                    _kardCol = i;
+                    break;
+                }
         }
 
         Array.Resize(ref deck, _kardCol);//меняем размер массива в соответствии с количеством карт в колоде
@@ -73,8 +73,36 @@ public class KardControl : MonoBehaviour
     public GameObject[] KIHC = new GameObject[0];
     private void KardInHandControl()
     {
-
         for (int i = 0; i <= KIHC.Length - 1; ++i)//рисуем карты по новым позициям в зависимости от четности их в руке
+        {
+            if (KIHC[i].GetComponent<Control>().inHand)
+            {
+                    if (i == 0)
+                    {
+                        KIHC[i].transform.position = Vector3.Lerp(KIHC[i].transform.position, new Vector3(CPositionYes2.x - 0.7f + (xCPY * (i)), CPositionYes2.y - 0.1f * (i + 1), CPositionYes2.z + (-zCPY * (i - 1))), speedTP * Time.deltaTime);
+
+                        Quaternion _r = Quaternion.identity;
+                        _r.eulerAngles = new Vector3(0, 0, 0);
+                        KIHC[i].transform.rotation = Quaternion.Lerp(KIHC[i].transform.rotation, _r, speedRotate * Time.deltaTime);
+                    }
+                    else
+                    {
+                        KIHC[i].transform.position = Vector3.Lerp(KIHC[i].transform.position, new Vector3(CPositionYes2.x + (-xCPY * i), CPositionYes2.y - 0.1f * (i + 1), CPositionYes2.z + (-zCPY * i)), speedTP * Time.deltaTime);
+
+                        Quaternion _r = Quaternion.identity;
+                        _r.eulerAngles = new Vector3(0, CRotationYes2.y + yCRY * (i + 1), 0);
+                        KIHC[i].transform.rotation = Quaternion.Lerp(KIHC[i].transform.rotation, _r, speedRotate * Time.deltaTime);
+                    }
+            }
+        }
+
+
+
+
+
+
+
+    /*        for (int i = 0; i <= KIHC.Length - 1; ++i)//рисуем карты по новым позициям в зависимости от четности их в руке
         {
             if (KIHC[i].GetComponent<Control>().inHand)
             {
@@ -166,41 +194,113 @@ public class KardControl : MonoBehaviour
                     }
                 }
             }
-        }
+        }*/
     }
 
     public bool GoToHand = false;
     private void OnMouseDown() //если нажали на колоду
     {
+        bool _addKIHC = false;
         cardCounter = 0;
+
         for (int i = 0; i <= deck.Length - 1; ++i)
         {
-            if ((!deck[i].GetComponent<Control>().inHand) && (deck[cardCounter].transform.position.y >= deck[i].transform.position.y))
+            if (deck[i].GetComponent<Control>().inKoloda)
             {
-                    cardCounter = i + 1;
+                Debug.Log("карта из колоды № - " + (i + 1).ToString());
+                if (deck[i].transform.position.y > deck[cardCounter].transform.position.y)
+                {
+                    Debug.Log("КАРТА №" + (i + 1).ToString() + " выше всех остальных");
+                    cardCounter = i;
+                    _addKIHC = true;
+                }
+                else
+                {
+                    if (deck[i].transform.position.y == deck[cardCounter].transform.position.y)
+                    {
+                        Debug.Log("КАРТА №" + (i + 1).ToString() + " сравнивается сама с собой");
+                        cardCounter = i;
+                        _addKIHC = true;
+                    }
+                }
             }
         }
 
-        if (deck.Length > cardInHand)
+        Debug.Log("Прошли сортировку /");
+        if (_kardCol >= cardInHand && _addKIHC)
         {
-            cardInHand += 1;
+            if (cardInHand != 0)
+            {
+                Debug.Log("Если cardinHand != 0");
+                if (KIHC[cardInHand - 1] != null)
+                {
+                    cardInHand += 1;
+                    deck[cardCounter].GetComponent<Control>().inKoloda = false;
+                    deck[cardCounter].GetComponent<Control>().inHand = true;
+
+                    Array.Resize(ref deck, _kardCol - cardInHand);//перезаписываем массив колоды исключая из него карты, которые взяли в руку
+
+                    for (int i = 0; i <= deck.Length - 1; ++i)//здесь мы забираем карту из колоды
+                    {
+                        bool b = GameObject.Find("Kard (" + (i + 1).ToString() + ")").GetComponent<Control>().inKoloda;
+                        if (b)//записываем в массив колоды те карты, которые фактически еще в колоде
+                        {
+                            deck[i] = GameObject.Find("Kard (" + (i + 1).ToString() + ")");//массив заполняется перед функцией update каждый кадр, определяет сколько машин/Player(номер) зарегистрированно на сцене и записывает их в массив
+                        }
+                    }
+                }
+            }
+            else
+            {
+                Debug.Log("Если cardinHand == 0");
+                cardInHand += 1;
+                deck[cardCounter].GetComponent<Control>().inKoloda = false;
+                deck[cardCounter].GetComponent<Control>().inHand = true;
+
+                Array.Resize(ref deck, _kardCol - cardInHand);
+
+                for (int i = 0; i <= deck.Length - 1; ++i)//здесь мы забираем карту из колоды
+                {
+                    bool b = GameObject.Find("Kard (" + (i + 1).ToString() + ")").GetComponent<Control>().inKoloda;
+                    if (b)
+                    {
+                        deck[i] = GameObject.Find("Kard (" + (i + 1).ToString() + ")");//массив заполняется перед функцией update каждый кадр, определяет сколько машин/Player(номер) зарегистрированно на сцене и записывает их в массив
+                    }
+                }
+            }
+
+            Array.Resize(ref KIHC, cardInHand);//добавляем карту в массив карт в руке и расширяем массив
         }
 
-        Array.Resize(ref KIHC, cardInHand);//добавляем карту в массив карт в руке и расширяем массив
-
-        for (int i = 0; i <= KIHC.Length - 1; ++i)//перебираем карты в руке и задаем новые позиции
+        Debug.Log("Прошли перезапись и захват карты //");
+        if (_addKIHC)
         {
-            if (KIHC[i] == null)
+            Debug.Log("Прошли условие _addKIHC");
+            for (int i = 0; i <= KIHC.Length - 1; ++i)//перебираем карты в руке и задаем новые позиции
             {
+<<<<<<< Updated upstream
                 KIHC[i] = GameObject.Find("Kard (" + cardCounter.ToString() + ")");
                 KIHC[i].GetComponent<Control>().inHand = true;//показываем что карта теперь в руке
                 KIHC[i].GetComponent<Rigidbody>().isKinematic = true;//отключаем физику, что бы карта не падала из руки
                 KIHC[i].GetComponent<Collider>().isTrigger = true;//пока карта в руке, она не должна взаимодействовать с другими картами (а то будут разлетаться во все стороны)
                 break;
+=======
+                if (KIHC[i] == null)
+                {
+                    KIHC[i] = GameObject.Find("Kard (" + (cardCounter + 1).ToString() + ")");
+                   // KIHC[i].GetComponent<Control>().inKoloda = false;
+                    //KIHC[i].GetComponent<Control>().inHand = true;
+                    KIHC[i].GetComponent<Rigidbody>().isKinematic = true;
+                    KIHC[i].GetComponent<Collider>().isTrigger = true;
+                    break;
+                }
+>>>>>>> Stashed changes
             }
+            _addKIHC = false;
+            GoToHand = true;
+            _sh = 0;
         }
-        GoToHand = true;
-        _sh = 0;
+        Debug.Log("Прошли до финала функции ///");
     }
 
     private void RandomKard()//мешаем карты в колоде
@@ -232,6 +332,18 @@ public class KardControl : MonoBehaviour
 
     private void ResetCardP()// дополнительно для теста, возвращает все карты из руки в колоду
     {
+        float _vectT = 0.15f;
+        Array.Resize(ref deck, _kardCol);
+        for (int i = 0; i <= deck.Length - 1; ++i)
+        {
+                deck[i] = GameObject.Find("Kard (" + (i + 1).ToString() + ")");//массив заполняется перед функцией update каждый кадр, определяет сколько машин/Player(номер) зарегистрированно на сцене и записывает их в массив
+                deck[i].GetComponent<Control>().inKoloda = true;
+                _vectT += 0.25f;
+                deck[i].transform.position = new Vector3(-3.45f, _vectT, -3.2f);
+                deck[i].transform.rotation = new Quaternion(0, 0, 0, 0);
+
+        }
+
         for (int i = 0; i <= KIHC.Length - 1; ++i)//перебираем карты в руке и задаем новые позиции
         {
             KIHC[i].GetComponent<Control>().inHand = false;
@@ -241,19 +353,25 @@ public class KardControl : MonoBehaviour
             KIHC[i] = null;
         }
 
-        float _vectT = 0.15f;
-        for (int i = 0; i <= deck.Length - 1; ++i)
-        {
-            if (!deck[i].GetComponent<Control>().inHand)
-            {
-                _vectT += 0.25f;
-                deck[i].transform.position = new Vector3(-3.45f, _vectT, -3.2f);
-                deck[i].transform.rotation = new Quaternion(0, 0, 0, 0);
-            }
-        }
-
+        Array.Resize(ref KIHC, 0);
     }
 
+    public GameObject cardForMove;
+    [SerializeField] private Camera CameraForControl;
+    [SerializeField] private Vector3 mPos;
+    [SerializeField] private float speedTransformPosition = 5.0f;
+    public bool CMove = false;//проверяем двигаем ли мы какую-либо карту
+
+    public void CardMove(GameObject gocfm)
+    {
+        mPos = CameraForControl.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, CameraForControl.transform.position.y));
+        gocfm.transform.position = Vector3.Lerp(gocfm.transform.position, new Vector3(mPos.x, gocfm.transform.position.y, mPos.z), speedTransformPosition * Time.deltaTime);
+        gocfm.transform.rotation = new Quaternion(0,gocfm.transform.localRotation.y, 0, 1);
+        gocfm.GetComponent<Collider>().isTrigger = false;
+        gocfm.GetComponent<Control>().goOnTable = true;
+        gocfm.GetComponent<Rigidbody>().isKinematic = true;
+        CMove = true;
+    }
 
     private void OnGUI()//кнопки
     {

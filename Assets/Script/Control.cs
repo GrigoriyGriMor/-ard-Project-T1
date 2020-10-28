@@ -9,24 +9,24 @@ public class Control : MonoBehaviour
 {
 
     public bool inHand = false;
-    public float highlighting = 0.5f;
-    private Vector3 mPos;
+    public bool goOnTable = false;
+    public bool onTable = false;
+    public bool inKoloda = true;
 
-    public float speedTransformPosition = 5.0f;
     public GameObject table;
     public GameObject Koloda;
 
-    public bool goOnTable = false;
+
 
     public void Awake()
     {
-        table = GameObject.Find("Table");
+        table = GameObject.Find("InvisibleT");
         Koloda = GameObject.Find("Koloda");
     }
 
     public void Update()
     {
-        if (transform.position.y < table.transform.position.y)
+       /* if (transform.position.y < table.transform.position.y)
         {
            Koloda.GetComponent<KardControl>().cardCounter -= 1;
 
@@ -74,33 +74,44 @@ public class Control : MonoBehaviour
 
             goOnTable = false;
             inHand = false;
-        }
+        }*/
     }
 
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        if ((table.name == collision.collider.name) && !inKoloda)
+        {
+            onTable = true;
+        }
+    }
 
+    private void OnCollisionExit(Collision collision)
+    {
+        if (table.name == collision.collider.name)
+        {
+            onTable = false;
+        }
+    }
 
     private void OnMouseDrag()
     {
-        
-        mPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        gameObject.transform.position = Vector3.Lerp(gameObject.transform.position, new Vector3(mPos.x, gameObject.transform.position.y, mPos.z), speedTransformPosition * Time.deltaTime);
-        gameObject.GetComponent<Collider>().isTrigger = false;
-        goOnTable = true;
+        Koloda.GetComponent<KardControl>().CardMove(gameObject);
     }
 
 
     private void OnMouseUp()
     {
         gameObject.GetComponent<Rigidbody>().isKinematic = false;
+        Koloda.GetComponent<KardControl>().CMove = false;
     }
 
-
+    [SerializeField] private float highlighting = 0.5f;
     private void OnMouseExit()
     {
         if (!inHand && !goOnTable)
         {
-            Vector3 _p = new Vector3(gameObject.transform.localPosition.x, gameObject.transform.localPosition.y, gameObject.transform.position.z - highlighting);
+            Vector3 _p = new Vector3(gameObject.transform.localPosition.x, gameObject.transform.localPosition.y - highlighting, gameObject.transform.position.z);
             gameObject.transform.localPosition = _p;
             inHand = true;
         }
@@ -108,11 +119,10 @@ public class Control : MonoBehaviour
     
     private void OnMouseEnter()
     {
-        if (inHand && !goOnTable)
+        if (inHand && !goOnTable && !Koloda.GetComponent<KardControl>().CMove)
         {
-            Vector3 _p = new Vector3(gameObject.transform.localPosition.x, gameObject.transform.localPosition.y, gameObject.transform.position.z + highlighting);
+            Vector3 _p = new Vector3(gameObject.transform.localPosition.x, gameObject.transform.localPosition.y + highlighting, gameObject.transform.position.z);
             gameObject.transform.localPosition = _p;
-
             inHand = false;
         }
     }
